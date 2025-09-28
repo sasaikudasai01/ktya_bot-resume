@@ -46,7 +46,7 @@ trump_card = {}
 
 download_urls = {} # ссылки по которым должна качать руми
 
-ban_ids = ['7638221884', '882735772', '1332064220'] # ban
+ban_ids = [] # ban
 
 with open("rules.json", "r", encoding="utf-8") as f: # прочитать файл с правилами игр
     data = json.load(f)
