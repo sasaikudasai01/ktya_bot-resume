@@ -1,5 +1,3 @@
-from logging import exception
-
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery, FSInputFile
 from aiogram.filters import CommandStart
@@ -13,7 +11,7 @@ import os
 
 random.seed(time.time())
 
-bot = Bot(token=config.BOT_TOKEN_RUMI) # руми
+bot = Bot(token=config.CURRENT_BOT_TOKEN_RUMI) # руми
 dp_rumi = Dispatcher()
 
 # /start
@@ -37,23 +35,40 @@ async def download_yt(message):
 
 # вырезать офишал музик видео из названия
 async def skobki_remove(title):
-    skobki = title
+    skobki_sq = [] # список квадратных скобок
+    skobki_c = [] # список круглых скобок
+    title_final_name = title # название файла после удаления скобок
+
     # получение текста в скобках если есть скобки
-    if '(' in title:
-        skobki = title.split('(')[1].split(')')[0]
-    if '[' in title:
-        skobki = title.split('[')[1].split(']')[0]
+    while '(' in title_final_name or '[' in title_final_name:
+        try:
+            if '(' in title_final_name:
+                skobka = title_final_name.split('(')[1].split(')')[0]
+                skobki_c.append(skobka)
+                title_final_name = title_final_name.replace(f'({skobka})', '').strip()
+            if '[' in title_final_name:
+                skobka = title_final_name.split('[')[1].split(']')[0]
+                skobki_sq.append(skobka)
+                title_final_name = title_final_name.replace(f'[{skobka}]', '').strip()
+        except:
+            pass
 
     replacements = ['official', 'video', 'lyrics',
                     'lyric', 'color', 'hd', 'live',
                     'remaster', 'audio', 'original',
                     'ost', 'soundtrack', 'remastered', 'hq']
 
+    title_final_name = title  # вернуть полное название
     for replacement in replacements:
-        # эта проверка нужна, чтобы функция была универсальной, иначе пришлось бы сравнивать каждый вариант вручную, учитывая все варианты заглавных букв
-        if replacement in skobki.lower():
-            return title.replace(f'({skobki})', '').replace(f'[{skobki}]', '').strip()
-    return title
+        for skobka_sq in skobki_sq:
+            # эта проверка нужна, чтобы функция была универсальной, иначе пришлось бы сравнивать каждый вариант вручную, учитывая все варианты заглавных букв
+            if replacement in skobka_sq.lower():
+                title_final_name = title_final_name.replace(f'[{skobka_sq}]', '').strip()
+        for skobka_c in skobki_c:
+            if replacement in skobka_c.lower():
+                title_final_name = title_final_name.replace(f'({skobka_c})', '').strip()
+
+    return title_final_name
 
 @dp_rumi.callback_query(F.data.endswith('_download'))
 async def download_yt_mp3(callback: CallbackQuery):
@@ -100,7 +115,7 @@ async def download_yt_mp3(callback: CallbackQuery):
         'postprocessors': ydl_opts_postprocessors,
         'noplaylist': is_no_playlist,
         'cookiefile': 'cookies.txt',
-        'quiet': True
+        'quiet': False
     }
     if yt_format == 'mp4':
         ydl_opts['merge_output_format'] = ydl_opts_merge_output_format
@@ -148,11 +163,11 @@ async def download_yt_mp3(callback: CallbackQuery):
 
     except Exception as e:
         await message.reply(f'что то пошло не так')
-        if '403' in str(e):
-            await bot.send_message(988789518, 'нужно обновить кукисы') # уведомить разработчика о том, что нужно обновить кукисы
-            await message.reply(f'нужно обновить кукисы. я только что уведомила разработчика об этом, он скоро пофиксит ошибку')
-        if 'ERROR: [youtube] JuSsvM8B4Jc: Requested format is not available. Use --list-formats for a list of available formats' in str(e):
-            await bot.send_message(988789518, 'нужно обновить yt-dlp')  # уведомить разработчика о том, что нужно обновить yt-dlp
+        #if '403' in str(e):
+        #    await bot.send_message([айди чата бота с разработчиком], 'нужно обновить кукисы') # уведомить разработчика о том, что нужно обновить кукисы
+        #    await message.reply(f'нужно обновить кукисы. я только что уведомила разработчика об этом, он скоро пофиксит ошибку')
+        #if 'ERROR: [youtube] JuSsvM8B4Jc: Requested format is not available. Use --list-formats for a list of available formats' in str(e):
+        #    await bot.send_message([айди чата бота с разработчиком], 'нужно обновить yt-dlp')  # уведомить разработчика о том, что нужно обновить yt-dlp
         print(f'Error: {e}')
 
 

@@ -6,16 +6,21 @@ import time
 from aiogram import Bot
 import asyncio
 
-BOT_TOKEN_SHINOBU =''
-BOT_TOKEN_RUMI =''
+BOT_TOKEN_SHINOBU ='' # main shinobu
+BOT_TOKEN_RUMI ='' # main rumi
+
 OPENAI_GPT_API = ''
 
-# test tokens для теста ботов
-TEST_TOKEN_SHINOBU =''
-TEST_TOKEN_RUMI =''
+# test tokens
+TEST_TOKEN_SHINOBU ='' # test shinobu
+TEST_TOKEN_RUMI ='' # test rumi
 
-bot_shinobu = Bot(token=BOT_TOKEN_SHINOBU) # шинобу
-bot_rumi = Bot(token=BOT_TOKEN_RUMI) # руми
+# нужно менять эти переменные для теста ботов, чтобы не отключать основные
+CURRENT_BOT_TOKEN_SHINOBU = BOT_TOKEN_SHINOBU # current shinobu (main or test)
+CURRENT_BOT_TOKEN_RUMI = BOT_TOKEN_RUMI # current rumi (main or test)
+
+bot_shinobu = Bot(token=CURRENT_BOT_TOKEN_SHINOBU) # шинобу
+bot_rumi = Bot(token=CURRENT_BOT_TOKEN_RUMI) # руми
 
 # ссылки на <игры>.py
 game_modules = {
@@ -41,7 +46,7 @@ trump_card = {}
 
 download_urls = {} # ссылки по которым должна качать руми
 
-ban_ids = [] # ban
+ban_ids = ['7638221884', '882735772', '1332064220'] # ban
 
 with open("rules.json", "r", encoding="utf-8") as f: # прочитать файл с правилами игр
     data = json.load(f)
@@ -61,7 +66,7 @@ with open("personality.txt", "r", encoding="utf-8") as f:
 with open("personality_rumi.txt", "r", encoding="utf-8") as f:
     rumi_content = f.read()
 
-# "режиссер" для ии
+# "режиссер" для ии, в ключ нужно прописывать ник бота
 gpt_content = {'playful_shinobu_bot': f'Ты Telegram-бот, с помощью тебя люди играют в игры из {games}. твоя личность {shinobu_content}. если тебя попросят рассказать'
                                       f' правила, то расскажи правила используя информацию из {games}. ведущего у игр нет, им разве'
                                       ' что можно назвать только тебя, потому что ты рассылаешь игрокам слова. можешь перефразировать, менять'
@@ -122,12 +127,24 @@ async def gpt_response(message, chat_id, username, user_text, user_id, answer, b
             api_key=OPENAI_GPT_API
         )
 
+        # это нужно, чтобы легче было менять личность и не менять ник в gpt_content при переключении с основного бота на тестового
+        # в никах основного и тестового ботов должно быть одинаковое имя, которое прописывается в проверке ниже
+        # например @test_SHINOBU_bot для тестового и @playful_SHINOBU_bot для основного бота
+        ###
+        #response_system_content = (f'{gpt_content[me.username]}.'
+        #                           'к тебе сейчас обращается пользователь с ником @{username}')
+        ###
+        if 'shinobu' in me.username:
+            gpt_system_content = gpt_content['playful_shinobu_bot']
+        else:
+            gpt_system_content = gpt_content['rumi_wave_bot']
+
         if answer:
-            response_system_content = (f'{gpt_content[me.username]}.'
+            response_system_content = (f'{gpt_system_content}.'
                                        f'ответь на последнее сообщение, сообщение написала твоя сестра.')
         else:
-            response_system_content = (f'{gpt_content[me.username]}. к тебе сейчас обращается пользователь '
-                                       f'с ником @{username}')
+            response_system_content = (f'{gpt_content[me.username]}.'
+                                       'к тебе сейчас обращается пользователь с ником @{username}')
 
         response = client.chat.completions.create(
             model='openai/gpt-4o',
@@ -180,5 +197,5 @@ async def gpt_response(message, chat_id, username, user_text, user_id, answer, b
             ai_memory.pop(chat_id, None)  # сброс памяти
             await gpt_response(message, chat_id, username, user_text, user_id, False, bot)  # повторный вызов генерации ответа нейросети
         else:
-            await message.answer('я не могу тебе ответить, но вы можете продолжать играть', reply_to_message_id=message_id)
+            await message.answer(f'я не могу тебе ответить, но вы можете продолжать играть', reply_to_message_id=message_id)
             print(f'Err: {e}')

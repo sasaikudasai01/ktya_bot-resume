@@ -13,7 +13,7 @@ import main_rumi
 
 random.seed(time.time())
 
-bot = Bot(token=config.BOT_TOKEN_SHINOBU)
+bot = Bot(token=config.CURRENT_BOT_TOKEN_SHINOBU)
 dp = Dispatcher()
 
 # роутер для модулей игр для корректной работы callback_query
