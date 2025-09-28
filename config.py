@@ -143,7 +143,7 @@ async def gpt_response(message, chat_id, username, user_text, user_id, answer, b
             response_system_content = (f'{gpt_system_content}.'
                                        f'ответь на последнее сообщение, сообщение написала твоя сестра.')
         else:
-            response_system_content = (f'{gpt_content[me.username]}.'
+            response_system_content = (f'{gpt_system_content}.'
                                        'к тебе сейчас обращается пользователь с ником @{username}')
 
         response = client.chat.completions.create(
